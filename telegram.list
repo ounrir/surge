@@ -1,0 +1,14 @@
+DOMAIN-SUFFIX,t.me
+DOMAIN-SUFFIX,telesco.pe
+DOMAIN-KEYWORD,telegram
+
+# https://github.com/Blankwonder/surge-list
+IP-ASN,44907,no-resolve
+IP-ASN,59930,no-resolve
+IP-ASN,62014,no-resolve
+IP-ASN,62041,no-resolve
+IP-ASN,211157,no-resolve
+
+# https://github.com/dler-io/Rules
+IP-CIDR,5.28.195.1/32,no-resolve
+IP-CIDR,5.28.195.2/32,no-resolve
