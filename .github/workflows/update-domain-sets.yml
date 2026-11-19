@@ -1,0 +1,59 @@
+name: Update domain sets
+
+on:
+  schedule:
+    - cron: '17 0 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-domain-sets
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Generate domain sets
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          curl -fsSL --retry 3 https://raw.githubusercontent.com/felixonmars/dnsmasq-china-list/master/accelerated-domains.china.conf \
+            | sed -nE 's@^server=/([^/]+)/[^/]+$@.\1@p' \
+            | LC_ALL=C sort -u > china.txt
+
+          curl -fsSL --retry 3 https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt \
+            | sed -nE 's@^\|\|([[:alnum:].-]+)\^$@.\1@p' \
+            > hagezi.txt
+
+          test -s china.txt
+          test -s hagezi.txt
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git add -- china.txt hagezi.txt
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+
+          if git diff --cached --quiet -- china.txt; then
+            title='Update HaGeZi domain set'
+          elif git diff --cached --quiet -- hagezi.txt; then
+            title='Update China domain set'
+          else
+            title='Update China and HaGeZi domain sets'
+          fi
+
+          summary=$(git diff --cached --numstat | awk '{printf "%s: +%s -%s\n", $3, $1, $2}')
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "$title" -m "$summary"
+          git push origin HEAD:main
