@@ -29,27 +29,25 @@ jobs:
             | sed -nE 's@^server=/([^/]+)/[^/]+$@.\1@p' \
             | LC_ALL=C sort -u > china.txt
 
-          curl -fsSL --retry 3 https://big.oisd.nl/ \
-            | sed -nE 's@^\|\|([[:alnum:].-]+)\^$@.\1@p' \
-            > oisd.txt
+          curl -fsSL --retry 3 https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt \
+            | python3 AdGuardSDNSFilter/convert.py
 
           test -s china.txt
-          test -s oisd.txt
 
       - name: Commit changes
         shell: bash
         run: |
-          git add -- china.txt oisd.txt
+          git add -- china.txt AdGuardSDNSFilter/*.list
           if git diff --cached --quiet; then
             exit 0
           fi
 
           if git diff --cached --quiet -- china.txt; then
-            title='Update OISD domain set'
-          elif git diff --cached --quiet -- oisd.txt; then
+            title='Update AdGuard DNS rules'
+          elif git diff --cached --quiet -- AdGuardSDNSFilter/*.list; then
             title='Update China domain set'
           else
-            title='Update China and OISD domain sets'
+            title='Update China domain set and AdGuard DNS rules'
           fi
 
           summary=$(git diff --cached --numstat | awk '{printf "%s: +%s -%s\n", $3, $1, $2}')
